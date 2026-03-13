@@ -1,1 +1,9 @@
-
+{
+  "nom": "Tour Eiffel",
+  "sous_titre": "Champ-de-Mars · Paris",
+  "lat": 48.8584,
+  "lng": 2.2945,
+  "duree": "5:20",
+  "fichier": "paris-eiffel.mp3",
+  "transcription": "Bienvenue au pied de la Dame de Fer. Construite par Gustave Eiffel pour l'Exposition universelle de 1889, la Tour Eiffel fut d'abord décriée avant de devenir le symbole mondial de Paris..."
+}
