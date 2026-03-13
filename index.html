@@ -630,48 +630,118 @@ const ICONS = {
 };
 
 // ─────────────────────────────────────────────
-// DONNÉES DEMO
+// CONFIG GITHUB
 // ─────────────────────────────────────────────
-const destinations = {
-  japon: {
-    name: 'Japon',
-    icon: '⛩',
-    center: [136.0, 36.5],
-    zoom: 5.2,
-    pitch: 55,
-    bearing: -15,
-    iconKey: 'japon',
-    sites: [
-      { id: 'kinkakuji', name: "Temple d'Or", subtitle: 'Kinkaku-ji · Kyoto', lat: 35.0394, lng: 135.7292, duration: '6:08', file: null,
-        transcript: "Konnichiwa ! Bienvenue au Kinkaku-ji, le Temple du Pavillon d'Or. Édifié au XIVe siècle par le shogun Ashikaga Yoshimitsu, ce joyau de l'architecture bouddhiste zen est entièrement recouvert de feuilles d'or pur..." },
-      { id: 'fushimi', name: 'Fushimi Inari', subtitle: 'Sanctuaire · Kyoto', lat: 34.9671, lng: 135.7727, duration: '4:32', file: null,
-        transcript: "Irasshaimase ! Vous vous trouvez à l'entrée du sanctuaire Fushimi Inari-Taisha, dédié à la divinité Inari. Des milliers de torii vermillon forment des tunnels mystiques sur les flancs du mont Inari..." },
-      { id: 'fuji', name: 'Mont Fuji', subtitle: 'Shizuoka / Yamanashi', lat: 35.3606, lng: 138.7274, duration: '5:47', file: null,
-        transcript: "Devant vous se dresse le Fujisan, symbole éternel du Japon. Ce stratovolcan de 3 776 mètres est classé au patrimoine mondial de l'UNESCO depuis 2013. Sa silhouette parfaite a inspiré d'innombrables artistes..." },
-      { id: 'asakusa', name: 'Quartier Asakusa', subtitle: 'Senso-ji · Tokyo', lat: 35.7148, lng: 139.7967, duration: '3:55', file: null,
-        transcript: "Bienvenue dans le quartier le plus ancien de Tokyo. Le temple Senso-ji, fondé en 645, est le plus visité du Japon. La Nakamise-dori, longue allée bordée de boutiques traditionnelles, vous mène jusqu'au sanctuaire..." },
-      { id: 'nara', name: 'Parc de Nara', subtitle: 'Tōdai-ji · Nara', lat: 34.6895, lng: 135.8394, duration: '4:10', file: null,
-        transcript: "Dans le parc de Nara, plus de 1 200 cerfs sacrés déambulent librement depuis 1 300 ans. Le Grand Bouddha du Tōdai-ji, coulé en bronze en 752, mesure 15 mètres de hauteur et reste l'une des plus grandes statues du monde..." },
-    ]
-  },
-  france: {
-    name: 'France',
-    icon: '🗼',
-    center: [2.5, 46.5],
-    zoom: 5.5,
-    pitch: 50,
-    bearing: 0,
-    iconKey: 'france',
-    sites: [
-      { id: 'eiffel', name: 'Tour Eiffel', subtitle: 'Champ-de-Mars · Paris', lat: 48.8584, lng: 2.2945, duration: '5:20', file: null,
-        transcript: "Bienvenue au pied de la Dame de Fer. Construite par Gustave Eiffel pour l'Exposition universelle de 1889, la Tour Eiffel fut d'abord décriée avant de devenir le symbole mondial de Paris et de la France..." },
-      { id: 'louvre', name: 'Musée du Louvre', subtitle: 'Paris 1er', lat: 48.8606, lng: 2.3376, duration: '7:12', file: null,
-        transcript: "Le Louvre est le musée le plus visité au monde. Ancienne résidence royale, il abrite aujourd'hui plus de 35 000 œuvres, dont la Joconde de Léonard de Vinci et la Vénus de Milo. Sa pyramide de verre, dessinée par I.M. Pei..." },
-      { id: 'versailles', name: 'Château de Versailles', subtitle: 'Versailles, Yvelines', lat: 48.8049, lng: 2.1204, duration: '8:45', file: null,
-        transcript: "Sous le règne de Louis XIV, le Roi-Soleil, Versailles devint le centre du monde. Ce palais baroque de 700 pièces, entouré de 800 hectares de jardins à la française, symbolise l'apogée de la monarchie absolue..." },
-    ]
-  }
+const GITHUB_USER = 'nyssos2';
+const GITHUB_REPO = 'AudioMap';
+const GITHUB_BRANCH = 'main';
+const GITHUB_API = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/audioguides`;
+const GITHUB_RAW = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/audioguides`;
+
+// ─────────────────────────────────────────────
+// MÉTADONNÉES PAR DESTINATION
+// ─────────────────────────────────────────────
+const DEST_META = {
+  japon:   { name: 'Japon',    iconKey: 'japon',   center: [136.0, 36.5], zoom: 5.2, pitch: 55, bearing: -15 },
+  france:  { name: 'France',   iconKey: 'france',  center: [2.5, 46.5],   zoom: 5.5, pitch: 50, bearing: 0   },
+  italie:  { name: 'Italie',   iconKey: 'default', center: [12.5, 41.9],  zoom: 5.5, pitch: 45, bearing: 0   },
+  espagne: { name: 'Espagne',  iconKey: 'default', center: [-3.7, 40.4],  zoom: 5.5, pitch: 45, bearing: 0   },
+  default: { name: '',         iconKey: 'default', center: [0, 20],       zoom: 2,   pitch: 30, bearing: 0   },
 };
+
+// ─────────────────────────────────────────────
+// DONNÉES (remplies dynamiquement)
+// ─────────────────────────────────────────────
+let destinations = {};
+
+// ─────────────────────────────────────────────
+// CHARGEMENT GITHUB
+// ─────────────────────────────────────────────
+async function loadFromGitHub() {
+  showLoadingOverlay(true);
+  try {
+    // Lister les dossiers de destinations
+    const res = await fetch(GITHUB_API);
+    if (!res.ok) throw new Error('Repo inaccessible');
+    const folders = await res.json();
+    const destFolders = folders.filter(f => f.type === 'dir');
+
+    for (const folder of destFolders) {
+      const destKey = folder.name.toLowerCase();
+      const meta = DEST_META[destKey] || { ...DEST_META.default, name: capitalize(destKey) };
+
+      // Lister les fichiers JSON dans ce dossier
+      const filesRes = await fetch(`${GITHUB_API}/${folder.name}`);
+      if (!filesRes.ok) continue;
+      const files = await filesRes.json();
+      const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+
+      const sites = [];
+      for (const jf of jsonFiles) {
+        try {
+          const jsonRes = await fetch(`${GITHUB_RAW}/${folder.name}/${jf.name}`);
+          if (!jsonRes.ok) continue;
+          const data = await jsonRes.json();
+          const baseName = jf.name.replace('.json', '');
+          sites.push({
+            id: `${destKey}_${baseName}`,
+            name: data.nom || baseName,
+            subtitle: data.sous_titre || '',
+            lat: parseFloat(data.lat),
+            lng: parseFloat(data.lng),
+            duration: data.duree || '?:??',
+            transcript: data.transcription || '',
+            file: null,
+            audioUrl: `${GITHUB_RAW}/${folder.name}/${data.fichier || baseName + '.mp3'}`,
+            fromGitHub: true,
+          });
+        } catch(e) { console.warn('JSON invalide:', jf.name); }
+      }
+
+      if (sites.length > 0 || destFolders.length > 0) {
+        destinations[destKey] = {
+          name: meta.name || capitalize(destKey),
+          iconKey: meta.iconKey,
+          center: meta.center,
+          zoom: meta.zoom,
+          pitch: meta.pitch,
+          bearing: meta.bearing,
+          sites,
+        };
+      }
+    }
+  } catch(e) {
+    console.warn('Chargement GitHub échoué, mode local uniquement:', e.message);
+  }
+  showLoadingOverlay(false);
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ─────────────────────────────────────────────
+// LOADING OVERLAY
+// ─────────────────────────────────────────────
+function showLoadingOverlay(show) {
+  let el = document.getElementById('loading-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-overlay';
+    el.style.cssText = `position:fixed;inset:0;z-index:500;background:var(--bg);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+      font-family:'Outfit',sans-serif;color:var(--text2);font-size:13px;`;
+    el.innerHTML = `
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style="animation:spin 1.2s linear infinite;">
+        <circle cx="18" cy="18" r="15" stroke="var(--border2)" stroke-width="2"/>
+        <path d="M18 3a15 15 0 0115 15" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Chargement des audio-guides…</span>`;
+    document.body.appendChild(el);
+    const style = document.createElement('style');
+    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+  }
+  el.style.display = show ? 'flex' : 'none';
+}
 
 // ─────────────────────────────────────────────
 // STATE
@@ -755,7 +825,7 @@ function renderSitesList() {
       <div class="site-info">
         <div class="site-name">${site.name}</div>
         <div class="site-sub">${site.subtitle}</div>
-        <div class="site-dur">${site.duration}</div>
+        <div class="site-dur">${site.duration}${site.fromGitHub ? ' &nbsp;<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:var(--accent-dim);color:var(--accent);">GitHub</span>' : ' &nbsp;<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:var(--surface2);color:var(--text3);">session</span>'}</div>
       </div>`;
     item.onclick = () => selectSite(site);
     list.appendChild(item);
@@ -834,6 +904,10 @@ function showPlayer(site) {
     audio.src = URL.createObjectURL(site.file);
     audio.load();
     audio.play().then(() => { isPlaying = true; updatePlayBtn(); }).catch(() => {});
+  } else if (site.audioUrl) {
+    audio.src = site.audioUrl;
+    audio.load();
+    audio.play().then(() => { isPlaying = true; updatePlayBtn(); }).catch(() => {});
   } else {
     audio.src = '';
   }
@@ -843,7 +917,7 @@ function showPlayer(site) {
 // AUDIO CONTROLS
 // ─────────────────────────────────────────────
 function togglePlay() {
-  if (!currentSite || !currentSite.file) { showStatus('Aucun fichier audio. Importez un MP3.'); return; }
+  if (!currentSite || (!currentSite.file && !currentSite.audioUrl)) { showStatus('Aucun fichier audio associé.'); return; }
   if (isPlaying) { audio.pause(); isPlaying = false; }
   else { audio.play(); isPlaying = true; }
   updatePlayBtn();
@@ -952,10 +1026,16 @@ function centerMap() {
 // DOWNLOAD
 // ─────────────────────────────────────────────
 function downloadCurrent() {
-  if (!currentSite || !currentSite.file) { showStatus('Aucun fichier à télécharger.'); return; }
+  if (!currentSite) return;
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(currentSite.file);
-  a.download = currentSite.file.name;
+  if (currentSite.file) {
+    a.href = URL.createObjectURL(currentSite.file);
+    a.download = currentSite.file.name;
+  } else if (currentSite.audioUrl) {
+    a.href = currentSite.audioUrl;
+    a.download = currentSite.audioUrl.split('/').pop();
+    a.target = '_blank';
+  } else { showStatus('Aucun fichier à télécharger.'); return; }
   a.click();
 }
 
@@ -982,7 +1062,9 @@ async function handleFiles(files) {
       const site = buildSiteFromMeta(meta, file);
       const destKey = detectDest(meta, file.name);
       if (!destinations[destKey]) {
-        destinations[destKey] = { name: destKey, icon: '📍', center: [site.lng, site.lat], zoom: 8, pitch: 45, bearing: 0, iconKey: 'default', sites: [] };
+        const dm = DEST_META[destKey] || DEST_META.default;
+        destinations[destKey] = { name: dm.name || capitalize(destKey), iconKey: dm.iconKey,
+          center: [site.lng, site.lat], zoom: 8, pitch: dm.pitch, bearing: dm.bearing, sites: [] };
       }
       const existing = destinations[destKey].sites.findIndex(s => s.id === site.id);
       if (existing >= 0) destinations[destKey].sites[existing] = site;
@@ -1117,9 +1199,20 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 // START
 // ─────────────────────────────────────────────
 initTheme();
-renderDestTabs();
-renderSitesList();
 initMap();
+loadFromGitHub().then(() => {
+  renderDestTabs();
+  renderSitesList();
+  if (map.loaded()) renderMarkers();
+  else map.on('load', renderMarkers);
+  // select first dest if available
+  const keys = Object.keys(destinations);
+  if (keys.length > 0 && !destinations[currentDest]) {
+    currentDest = keys[0];
+    renderDestTabs();
+    renderSitesList();
+  }
+});
 
 // ─────────────────────────────────────────────
 // LOGIN
