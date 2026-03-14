@@ -606,6 +606,15 @@
 mapboxgl.accessToken = 'pk.eyJ1Ijoibnlzc29zIiwiYSI6ImNtbW9tdTh6aTAycDgycHNpcnJ4NXFsanAifQ.sCST1GnBJNnAHlwT43Pp6g';
 
 // ─────────────────────────────────────────────
+// CONFIG GITHUB
+// ─────────────────────────────────────────────
+const GITHUB_USER = 'nyssos2';
+const GITHUB_REPO = 'AudioMap';
+const GITHUB_BRANCH = 'main';
+const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+const API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
+
+// ─────────────────────────────────────────────
 // ICÔNES SVG PAR PAYS
 // ─────────────────────────────────────────────
 const ICONS = {
@@ -630,118 +639,9 @@ const ICONS = {
 };
 
 // ─────────────────────────────────────────────
-// CONFIG GITHUB
+// DONNÉES (chargées depuis GitHub)
 // ─────────────────────────────────────────────
-const GITHUB_USER = 'nyssos2';
-const GITHUB_REPO = 'AudioMap';
-const GITHUB_BRANCH = 'main';
-const GITHUB_API = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/audioguides`;
-const GITHUB_RAW = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/audioguides`;
-
-// ─────────────────────────────────────────────
-// MÉTADONNÉES PAR DESTINATION
-// ─────────────────────────────────────────────
-const DEST_META = {
-  japon:   { name: 'Japon',    iconKey: 'japon',   center: [136.0, 36.5], zoom: 5.2, pitch: 55, bearing: -15 },
-  france:  { name: 'France',   iconKey: 'france',  center: [2.5, 46.5],   zoom: 5.5, pitch: 50, bearing: 0   },
-  italie:  { name: 'Italie',   iconKey: 'default', center: [12.5, 41.9],  zoom: 5.5, pitch: 45, bearing: 0   },
-  espagne: { name: 'Espagne',  iconKey: 'default', center: [-3.7, 40.4],  zoom: 5.5, pitch: 45, bearing: 0   },
-  default: { name: '',         iconKey: 'default', center: [0, 20],       zoom: 2,   pitch: 30, bearing: 0   },
-};
-
-// ─────────────────────────────────────────────
-// DONNÉES (remplies dynamiquement)
-// ─────────────────────────────────────────────
-let destinations = {};
-
-// ─────────────────────────────────────────────
-// CHARGEMENT GITHUB
-// ─────────────────────────────────────────────
-async function loadFromGitHub() {
-  showLoadingOverlay(true);
-  try {
-    // Lister les dossiers de destinations
-    const res = await fetch(GITHUB_API);
-    if (!res.ok) throw new Error('Repo inaccessible');
-    const folders = await res.json();
-    const destFolders = folders.filter(f => f.type === 'dir');
-
-    for (const folder of destFolders) {
-      const destKey = folder.name.toLowerCase();
-      const meta = DEST_META[destKey] || { ...DEST_META.default, name: capitalize(destKey) };
-
-      // Lister les fichiers JSON dans ce dossier
-      const filesRes = await fetch(`${GITHUB_API}/${folder.name}`);
-      if (!filesRes.ok) continue;
-      const files = await filesRes.json();
-      const jsonFiles = files.filter(f => f.name.endsWith('.json'));
-
-      const sites = [];
-      for (const jf of jsonFiles) {
-        try {
-          const jsonRes = await fetch(`${GITHUB_RAW}/${folder.name}/${jf.name}`);
-          if (!jsonRes.ok) continue;
-          const data = await jsonRes.json();
-          const baseName = jf.name.replace('.json', '');
-          sites.push({
-            id: `${destKey}_${baseName}`,
-            name: data.nom || baseName,
-            subtitle: data.sous_titre || '',
-            lat: parseFloat(data.lat),
-            lng: parseFloat(data.lng),
-            duration: data.duree || '?:??',
-            transcript: data.transcription || '',
-            file: null,
-            audioUrl: `${GITHUB_RAW}/${folder.name}/${data.fichier || baseName + '.mp3'}`,
-            fromGitHub: true,
-          });
-        } catch(e) { console.warn('JSON invalide:', jf.name); }
-      }
-
-      if (sites.length > 0 || destFolders.length > 0) {
-        destinations[destKey] = {
-          name: meta.name || capitalize(destKey),
-          iconKey: meta.iconKey,
-          center: meta.center,
-          zoom: meta.zoom,
-          pitch: meta.pitch,
-          bearing: meta.bearing,
-          sites,
-        };
-      }
-    }
-  } catch(e) {
-    console.warn('Chargement GitHub échoué, mode local uniquement:', e.message);
-  }
-  showLoadingOverlay(false);
-}
-
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-// ─────────────────────────────────────────────
-// LOADING OVERLAY
-// ─────────────────────────────────────────────
-function showLoadingOverlay(show) {
-  let el = document.getElementById('loading-overlay');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'loading-overlay';
-    el.style.cssText = `position:fixed;inset:0;z-index:500;background:var(--bg);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-      font-family:'Outfit',sans-serif;color:var(--text2);font-size:13px;`;
-    el.innerHTML = `
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style="animation:spin 1.2s linear infinite;">
-        <circle cx="18" cy="18" r="15" stroke="var(--border2)" stroke-width="2"/>
-        <path d="M18 3a15 15 0 0115 15" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <span>Chargement des audio-guides…</span>`;
-    document.body.appendChild(el);
-    const style = document.createElement('style');
-    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
-    document.head.appendChild(style);
-  }
-  el.style.display = show ? 'flex' : 'none';
-}
+const destinations = {};
 
 // ─────────────────────────────────────────────
 // STATE
@@ -825,7 +725,7 @@ function renderSitesList() {
       <div class="site-info">
         <div class="site-name">${site.name}</div>
         <div class="site-sub">${site.subtitle}</div>
-        <div class="site-dur">${site.duration}${site.fromGitHub ? ' &nbsp;<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:var(--accent-dim);color:var(--accent);">GitHub</span>' : ' &nbsp;<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:var(--surface2);color:var(--text3);">session</span>'}</div>
+        <div class="site-dur">${site.duration}</div>
       </div>`;
     item.onclick = () => selectSite(site);
     list.appendChild(item);
@@ -904,8 +804,8 @@ function showPlayer(site) {
     audio.src = URL.createObjectURL(site.file);
     audio.load();
     audio.play().then(() => { isPlaying = true; updatePlayBtn(); }).catch(() => {});
-  } else if (site.audioUrl) {
-    audio.src = site.audioUrl;
+  } else if (site.mp3url) {
+    audio.src = site.mp3url;
     audio.load();
     audio.play().then(() => { isPlaying = true; updatePlayBtn(); }).catch(() => {});
   } else {
@@ -917,7 +817,7 @@ function showPlayer(site) {
 // AUDIO CONTROLS
 // ─────────────────────────────────────────────
 function togglePlay() {
-  if (!currentSite || (!currentSite.file && !currentSite.audioUrl)) { showStatus('Aucun fichier audio associé.'); return; }
+  if (!currentSite || (!currentSite.file && !currentSite.mp3url)) { showStatus('Aucun fichier audio. Importez un MP3.'); return; }
   if (isPlaying) { audio.pause(); isPlaying = false; }
   else { audio.play(); isPlaying = true; }
   updatePlayBtn();
@@ -1026,17 +926,20 @@ function centerMap() {
 // DOWNLOAD
 // ─────────────────────────────────────────────
 function downloadCurrent() {
-  if (!currentSite) return;
-  const a = document.createElement('a');
+  if (!currentSite) { showStatus('Aucun fichier à télécharger.'); return; }
   if (currentSite.file) {
+    const a = document.createElement('a');
     a.href = URL.createObjectURL(currentSite.file);
     a.download = currentSite.file.name;
-  } else if (currentSite.audioUrl) {
-    a.href = currentSite.audioUrl;
-    a.download = currentSite.audioUrl.split('/').pop();
+    a.click();
+  } else if (currentSite.mp3url) {
+    const a = document.createElement('a');
+    a.href = currentSite.mp3url;
     a.target = '_blank';
-  } else { showStatus('Aucun fichier à télécharger.'); return; }
-  a.click();
+    a.click();
+  } else {
+    showStatus('Aucun fichier à télécharger.');
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -1062,9 +965,7 @@ async function handleFiles(files) {
       const site = buildSiteFromMeta(meta, file);
       const destKey = detectDest(meta, file.name);
       if (!destinations[destKey]) {
-        const dm = DEST_META[destKey] || DEST_META.default;
-        destinations[destKey] = { name: dm.name || capitalize(destKey), iconKey: dm.iconKey,
-          center: [site.lng, site.lat], zoom: 8, pitch: dm.pitch, bearing: dm.bearing, sites: [] };
+        destinations[destKey] = { name: destKey, icon: '📍', center: [site.lng, site.lat], zoom: 8, pitch: 45, bearing: 0, iconKey: 'default', sites: [] };
       }
       const existing = destinations[destKey].sites.findIndex(s => s.id === site.id);
       if (existing >= 0) destinations[destKey].sites[existing] = site;
@@ -1196,22 +1097,112 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 });
 
 // ─────────────────────────────────────────────
+// CHARGEMENT GITHUB
+// ─────────────────────────────────────────────
+
+// Mapping nom de dossier → config destination
+const DEST_CONFIG = {
+  japon:  { name: 'Japon',  icon: '⛩', iconKey: 'japon',  center: [136.0, 36.5], zoom: 5.2, pitch: 55, bearing: -15 },
+  france: { name: 'France', icon: '🗼', iconKey: 'france', center: [2.5,   46.5], zoom: 5.5, pitch: 50, bearing: 0  },
+};
+
+function destConfigFor(key) {
+  return DEST_CONFIG[key] || { name: key.charAt(0).toUpperCase() + key.slice(1), icon: '📍', iconKey: 'default', center: [0, 20], zoom: 3, pitch: 45, bearing: 0 };
+}
+
+function showLoadingOverlay(msg) {
+  let el = document.getElementById('gh-loading');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'gh-loading';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9998;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:"DM Sans",sans-serif;color:var(--text2);font-size:13px;';
+    el.innerHTML = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="animation:spin 1s linear infinite"><circle cx="16" cy="16" r="13" stroke="var(--border2)" stroke-width="2.5"/><path d="M16 3a13 13 0 0 1 13 13" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/></svg><span id="gh-loading-msg"></span>`;
+    const style = document.createElement('style');
+    style.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+    document.body.appendChild(el);
+  }
+  document.getElementById('gh-loading-msg').textContent = msg;
+}
+
+function hideLoadingOverlay() {
+  const el = document.getElementById('gh-loading');
+  if (el) el.remove();
+}
+
+async function loadFromGitHub() {
+  showLoadingOverlay('Connexion à GitHub…');
+  try {
+    // 1. Lister les sous-dossiers de audioguides/
+    const res = await fetch(`${API_BASE}/audioguides`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const items = await res.json();
+    const folders = items.filter(i => i.type === 'dir');
+
+    if (folders.length === 0) {
+      showLoadingOverlay('Aucun audioguide trouvé dans le repo.');
+      setTimeout(hideLoadingOverlay, 2500);
+      return;
+    }
+
+    // 2. Pour chaque dossier, lister les .json
+    for (const folder of folders) {
+      showLoadingOverlay(`Chargement : ${folder.name}…`);
+      const key = folder.name.toLowerCase();
+      const cfg = destConfigFor(key);
+
+      const folderRes = await fetch(`${API_BASE}/audioguides/${folder.name}`);
+      if (!folderRes.ok) continue;
+      const folderItems = await folderRes.json();
+      const jsonFiles = folderItems.filter(f => f.name.endsWith('.json'));
+
+      if (jsonFiles.length === 0) continue;
+
+      const sites = [];
+      for (const jf of jsonFiles) {
+        try {
+          const dataRes = await fetch(`${RAW_BASE}/audioguides/${folder.name}/${jf.name}`);
+          if (!dataRes.ok) continue;
+          const data = await dataRes.json();
+          sites.push({
+            id: jf.name.replace('.json', '').replace(/\W/g, '_'),
+            name: data.nom || jf.name,
+            subtitle: data.sous_titre || '',
+            lat: parseFloat(data.lat),
+            lng: parseFloat(data.lng),
+            duration: data.duree || '?:??',
+            transcript: data.transcription || '',
+            mp3url: data.fichier ? `${RAW_BASE}/audioguides/${folder.name}/${data.fichier}` : null,
+            file: null,
+          });
+        } catch(e) { console.warn('JSON invalide:', jf.name, e); }
+      }
+
+      if (sites.length > 0) {
+        destinations[key] = { ...cfg, sites };
+      }
+    }
+
+    // 3. Sélectionner la première destination
+    const keys = Object.keys(destinations);
+    if (keys.length > 0) currentDest = keys[0];
+
+    hideLoadingOverlay();
+  } catch(e) {
+    console.error('Erreur GitHub:', e);
+    showLoadingOverlay('Erreur de chargement. Vérifiez votre connexion.');
+    setTimeout(hideLoadingOverlay, 3000);
+  }
+}
+
+// ─────────────────────────────────────────────
 // START
 // ─────────────────────────────────────────────
 initTheme();
-initMap();
 loadFromGitHub().then(() => {
   renderDestTabs();
   renderSitesList();
-  if (map.loaded()) renderMarkers();
-  else map.on('load', renderMarkers);
-  // select first dest if available
-  const keys = Object.keys(destinations);
-  if (keys.length > 0 && !destinations[currentDest]) {
-    currentDest = keys[0];
-    renderDestTabs();
-    renderSitesList();
-  }
+  initMap();
 });
 
 // ─────────────────────────────────────────────
