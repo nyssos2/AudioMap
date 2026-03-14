@@ -672,7 +672,7 @@ let leftVisible = true, rightVisible = true;
 // INIT MAP
 // ─────────────────────────────────────────────
 function initMap() {
-  const dest = destinations[currentDest];
+  const dest = destinations[currentDest] || { center: [136.0, 36.5], zoom: 5, pitch: 45, bearing: 0 };
   map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/satellite-streets-v12',
@@ -1176,23 +1176,16 @@ async function loadFromGitHub() {
   // Rendre la UI avec les données chargées (ou vides)
   renderDestTabs();
   renderSitesList();
-
-  // Ajouter les marqueurs si la carte est déjà chargée, sinon attendre son événement 'load'
-  if (map) {
-    if (map.loaded()) {
-      renderMarkers();
-    } else {
-      map.once('load', renderMarkers);
-    }
-  }
+  // renderMarkers sera appelé par initMap → map.on('load', ...)
 }
 
 // ─────────────────────────────────────────────
 // START
 // ─────────────────────────────────────────────
 initTheme();
-initMap();           // la carte démarre en parallèle
-loadFromGitHub();    // le chargement GitHub démarre en parallèle
+loadFromGitHub().then(() => {
+  initMap();
+});
 
 // ─────────────────────────────────────────────
 // LOGIN
