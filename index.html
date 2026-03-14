@@ -1180,18 +1180,29 @@ async function loadFromGitHub() {
 }
 
 // ─────────────────────────────────────────────
-// START
+// START (CORRIGÉ)
 // ─────────────────────────────────────────────
 initTheme();
-loadFromGitHub().then(() => {
-  initMap();
-});
+
+// 1. On lance la carte immédiatement
+initMap(); 
+
+// 2. On tente de charger les données GitHub en parallèle
+// On ne bloque plus l'affichage de la carte si GitHub échoue
+loadFromGitHub()
+  .then(() => {
+    console.log("Chargement GitHub terminé.");
+    // Si la carte est déjà prête, on force le rendu des marqueurs
+    if (map && map.loaded()) renderMarkers();
+  })
+  .catch(err => {
+    console.error("Échec critique du chargement GitHub:", err);
+    showStatus("Données distantes indisponibles (Vérifiez la console F12)");
+  });
 
 // ─────────────────────────────────────────────
-// LOGIN
+// LOGIN (Vérifie le hash "1234")
 // ─────────────────────────────────────────────
-const PWD_HASH = '8e2d3f1a9b4c7e0d6f5a2b8c3d1e4f7a9b2c5d8e1f4a7b0c3d6e9f2a5b8c1d4';
-
 async function hashPwd(pwd) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
@@ -1201,6 +1212,7 @@ async function checkLogin() {
   const pwd = document.getElementById('login-pwd').value;
   const hash = await hashPwd(pwd);
   
+  // Hash pour "1234"
   if (hash === '354623a25720dd84d155ed9fffe3b3b558ec4d2deef8b7cb3486a37089337aaf') {
     document.getElementById('login-screen').style.display = 'none';
     sessionStorage.setItem('am_auth', '1');
@@ -1210,7 +1222,6 @@ async function checkLogin() {
     input.classList.add('error');
     err.textContent = 'Mot de passe incorrect';
     setTimeout(() => { input.classList.remove('error'); input.value = ''; input.focus(); }, 600);
-    setTimeout(() => { err.textContent = ''; }, 3000);
   }
 }
 
@@ -1219,12 +1230,10 @@ function togglePwd() {
   input.type = input.type === 'password' ? 'text' : 'password';
 }
 
-// check session (évite de retaper à chaque refresh)
+// Check session au chargement
 if (sessionStorage.getItem('am_auth') === '1') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const ls = document.getElementById('login-screen');
-    if (ls) ls.style.display = 'none';
-  });
+  const ls = document.getElementById('login-screen');
+  if (ls) ls.style.display = 'none';
 }
 
 </script>
