@@ -1,1 +1,14 @@
-
+{
+  "destinations": [
+    {
+      "key": "japon",
+      "nom": "Japon",
+      "sites": []
+    },
+    {
+      "key": "france",
+      "nom": "France",
+      "sites": []
+    }
+  ]
+}
