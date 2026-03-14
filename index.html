@@ -307,15 +307,6 @@
     transform: scale(1.15);
     box-shadow: 0 4px 20px rgba(201,169,110,0.3);
   }
-  .map-marker::after {
-    content: attr(data-label);
-    position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
-    white-space: nowrap; font-size: 10px; font-family: 'DM Sans', sans-serif;
-    color: var(--text); background: rgba(15,15,19,0.85);
-    padding: 2px 7px; border-radius: 10px;
-    border: 1px solid var(--border2);
-    pointer-events: none;
-  }
 
   /* ── UPLOAD OVERLAY ── */
   #upload-overlay {
@@ -348,6 +339,10 @@
   .mapboxgl-ctrl-group { background: var(--surface) !important; border: 1px solid var(--border2) !important; }
   .mapboxgl-ctrl-group button { background: transparent !important; }
   .mapboxgl-ctrl-icon { filter: invert(0.7); }
+  /* Rend l'icône de géolocalisation cohérente avec ton thème */
+  .mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
+    filter: invert(0.7);
+}
 
   /* ── ANIMATIONS ── */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -603,7 +598,7 @@
 // ─────────────────────────────────────────────
 // MAPBOX TOKEN
 // ─────────────────────────────────────────────
-mapboxgl.accessToken = 'pk.eyJ1Ijoibnlzc29zIiwiYSI6ImNtbW9ta2pjYTBlcWgycnNkcGxlbDBqbTIifQ.DTHeNfisLaBw5DmlPEoUww';
+mapboxgl.accessToken = 'pk.eyJ1Ijoibnlzc29zIiwiYSI6ImNtbW9ta2pjYTBlcWgycnNkcGxlbDBqbTIifQ.DTHeNfisLaBw5DmlPEoUww'; // token public sans restriction
 
 // ─────────────────────────────────────────────
 // ICÔNES SVG PAR PAYS
@@ -683,7 +678,20 @@ function initMap() {
     antialias: true
   });
 
+  // Boutons de navigation (+, -, rotation)
   map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+  // --- DEBUT DU NOUVEAU CODE : BOUTON GÉOLOCALISATION ---
+  const geolocate = new mapboxgl.GeolocateControl({
+    positionOptions: {
+      enableHighAccuracy: true
+    },
+    trackUserLocation: true, // Suit l'utilisateur quand il bouge
+    showUserHeading: true    // Montre vers où on regarde (sur mobile)
+  });
+  
+  map.addControl(geolocate, 'top-right');
+  // --- FIN DU NOUVEAU CODE ---
 
   map.on('load', () => {
     map.addLayer({
