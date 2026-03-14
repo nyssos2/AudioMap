@@ -333,6 +333,25 @@
   .btn-cancel:hover { border-color: var(--red); color: var(--red); }
   #file-input { display: none; }
 
+/* ── MAP LOADER ── */
+#map-loader {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
+  background: var(--bg);
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+#map-loader.hidden { opacity: 0; }
+.spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2.5px solid var(--border2);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+.spinner-text { font-size: 12px; color: var(--text3); letter-spacing: 0.05em; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
   /* ── MAPBOX overrides ── */
   .mapboxgl-ctrl-logo { display: none !important; }
   .mapboxgl-ctrl-attrib { opacity: 0.4; font-size: 9px; }
@@ -431,7 +450,7 @@
     </div>
     <div class="login-error" id="login-error"></div>
     <button class="login-btn" onclick="checkLogin()">Accéder à AudioMap</button>
-    <div class="login-hint">Accès réservé · AudioMap v1.0</div>
+    <div class="login-hint">Accès réservé · AudioMap v2.0</div>
   </div>
 </div>
 <div id="app">
@@ -485,13 +504,18 @@
       </div>
       <div class="sidebar-header">
         <div class="sidebar-label">Sites — <span id="dest-name-label">—</span></div>
-        <div class="sidebar-count"><span id="sites-count">0</span> audio-guides</div>
+        <div class="sidebar-count"><span id="sites-count">0</span> audioguides</div>
       </div>
       <div class="sites-list" id="sites-list"></div>
     </div>
 
     <!-- MAP -->
-    <div id="map"></div>
+	<div id="map">
+	  <div id="map-loader">
+		<div class="spinner"></div>
+		<div class="spinner-text">Chargement de la carte…</div>
+	  </div>
+	</div>
 
     <!-- RIGHT PANEL -->
     <div id="player-panel">
@@ -505,7 +529,7 @@
             <circle cx="20" cy="20" r="7" stroke="#c9a96e" stroke-width="1.5"/>
             <circle cx="20" cy="20" r="2" fill="#c9a96e"/>
           </svg>
-          <p>Cliquez sur un repère<br>pour écouter l'audio-guide</p>
+          <p>Cliquez sur un repère<br>pour écouter l'audioguide correspondant</p>
         </div>
         <div id="player-content" style="display:none; flex-direction:column; gap:16px; flex:1;">
           <div class="player-header">
@@ -535,7 +559,7 @@
           </div>
 
           <div class="controls">
-            <button class="ctrl" onclick="seek(-30)" title="−30s">
+<button class="ctrl" onclick="seek(-30)" title="−30s">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 100 12A6 6 0 008 2z" stroke="currentColor" stroke-width="1.3"/><path d="M5 8h4M7 6l-2 2 2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><text x="8.5" y="9.5" font-size="4" fill="currentColor" text-anchor="middle" font-family="sans-serif">30</text></svg>
             </button>
             <button class="ctrl" onclick="seek(-10)" title="−10s">
@@ -552,6 +576,16 @@
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 100 12A6 6 0 008 2z" stroke="currentColor" stroke-width="1.3"/><path d="M7 8H3M5 6l2 2-2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </div>
+		  
+		  <div class="speed-controls">
+            <span class="speed-label">Vitesse</span>
+			<div class="speed-btns">
+		      <button class="speed-btn" onclick="setSpeed(0.75)">0.75×</button>
+			  <button class="speed-btn active" onclick="setSpeed(1)">1×</button>
+			  <button class="speed-btn" onclick="setSpeed(1.25)">1.25×</button>
+			  <button class="speed-btn" onclick="setSpeed(1.5)">1.5×</button>
+			</div>
+		  </div>
 
           <div class="transcript-box">
             <div class="transcript-label">Transcription · métadonnées</div>
@@ -574,6 +608,19 @@
 
   </div><!-- /main -->
 </div><!-- /app -->
+
+/* ── SPEED CONTROLS ── */
+.speed-controls { display: flex; align-items: center; gap: 10px; }
+.speed-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; }
+.speed-btns { display: flex; gap: 4px; flex: 1; }
+.speed-btn {
+  flex: 1; padding: 5px 0; border-radius: 6px;
+  border: 1px solid var(--border2); background: transparent;
+  font-size: 11px; color: var(--text2); cursor: pointer;
+  transition: all 0.18s;
+}
+.speed-btn:hover { border-color: var(--accent); color: var(--accent); }
+.speed-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 500; }
 
 <!-- UPLOAD OVERLAY -->
 <div id="upload-overlay" onclick="closeImportOutside(event)">
@@ -692,6 +739,14 @@ function initMap() {
   
   map.addControl(geolocate, 'top-right');
   // --- FIN DU NOUVEAU CODE ---
+  
+  map.on('idle', () => {
+    const loader = document.getElementById('map-loader');
+    if (loader) {
+      loader.classList.add('hidden');
+      setTimeout(() => loader.remove(), 500);
+    }
+  });
 
   map.on('load', () => {
     map.addLayer({
@@ -745,6 +800,7 @@ function renderSitesList() {
       </div>`;
     item.onclick = () => selectSite(site);
     list.appendChild(item);
+	fetchMp3Duration(site);
   });
 }
 
@@ -865,6 +921,25 @@ document.getElementById('progress-input').addEventListener('input', e => {
   if (!audio.duration) return;
   audio.currentTime = (e.target.value / 100) * audio.duration;
 });
+
+function fetchMp3Duration(site) {
+  if (!site.mp3url || site.duration !== '?:??') return;
+  const tmp = new Audio();
+  tmp.preload = 'metadata';
+  tmp.src = site.mp3url;
+  tmp.addEventListener('loadedmetadata', () => {
+    site.duration = fmt(tmp.duration);
+    tmp.src = '';
+    renderSitesList();
+  });
+}
+
+function setSpeed(rate) {
+  audio.playbackRate = rate;
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', parseFloat(btn.textContent) === rate);
+  });
+}
 
 function fmt(s) {
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
@@ -1122,69 +1197,49 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 // CHARGEMENT GITHUB
 // ─────────────────────────────────────────────
 async function loadFromGitHub() {
-  // Affiche un spinner dans la sidebar
   document.getElementById('sites-count').textContent = '…';
   document.getElementById('dest-name-label').textContent = 'Chargement';
 
   try {
-    console.log('[AudioMap] Chargement depuis GitHub…');
-    const res = await fetch(`${API_BASE}/audioguides`);
-    if (!res.ok) throw new Error(`API GitHub : HTTP ${res.status} sur /audioguides`);
-    const items = await res.json();
-    const folders = items.filter(i => i.type === 'dir');
-    console.log('[AudioMap] Dossiers trouvés :', folders.map(f => f.name));
+    console.log('[AudioMap] Chargement index.json…');
+    const res = await fetch(`${RAW_BASE}/audioguides/index.json`);
+    if (!res.ok) throw new Error(`index.json introuvable : HTTP ${res.status}`);
+    const index = await res.json();
 
-    for (const folder of folders) {
-      const key = folder.name.toLowerCase();
+    for (const dest of index.destinations) {
+      const key = dest.key.toLowerCase();
       const cfg = destConfigFor(key);
-
-      const fRes = await fetch(`${API_BASE}/audioguides/${folder.name}`);
-      if (!fRes.ok) { console.warn(`[AudioMap] Impossible de lire ${folder.name}`); continue; }
-      const fItems = await fRes.json();
-      const jsonFiles = fItems.filter(f => f.name.endsWith('.json'));
-      console.log(`[AudioMap] ${folder.name} → ${jsonFiles.length} JSON`);
-
       const sites = [];
-      for (const jf of jsonFiles) {
-        try {
-          const dRes = await fetch(`${RAW_BASE}/audioguides/${folder.name}/${jf.name}`);
-          if (!dRes.ok) { console.warn(`[AudioMap] JSON introuvable : ${jf.name}`); continue; }
-          const data = await dRes.json();
-          if (!data.lat || !data.lng) { console.warn(`[AudioMap] Pas de GPS dans ${jf.name}`); continue; }
-          sites.push({
-            id: jf.name.replace('.json','').replace(/\W/g,'_'),
-            name:       data.nom        || jf.name,
-            subtitle:   data.sous_titre || '',
-            lat:        parseFloat(data.lat),
-            lng:        parseFloat(data.lng),
-            duration:   data.duree      || '?:??',
-            transcript: data.transcription || '',
-            mp3url: data.fichier
-              ? `${RAW_BASE}/audioguides/${folder.name}/${data.fichier}`
-              : null,
-            file: null,
-          });
-        } catch(e) { console.warn(`[AudioMap] Erreur lecture ${jf.name}:`, e); }
+
+      for (const site of dest.sites) {
+        if (!site.lat || !site.lng) { console.warn(`[AudioMap] Pas de GPS pour ${site.nom}`); continue; }
+        sites.push({
+          id:         site.fichier ? site.fichier.replace('.mp3','').replace(/\W/g,'_') : site.nom,
+          name:       site.nom        || '—',
+          subtitle:   site.sous_titre || '',
+          lat:        parseFloat(site.lat),
+          lng:        parseFloat(site.lng),
+          duration:   site.duree      || '?:??',
+          transcript: site.transcription || '',
+          mp3url:     site.fichier ? `${RAW_BASE}/audioguides/${key}/${site.fichier}` : null,
+          file:       null,
+        });
       }
 
-      if (sites.length > 0) {
-        destinations[key] = { ...cfg, sites };
-        console.log(`[AudioMap] Destination chargée : ${key} (${sites.length} sites)`);
-      }
+      destinations[key] = { ...cfg, sites };
+      console.log(`[AudioMap] ${key} → ${sites.length} sites`);
     }
+
   } catch(e) {
-    console.error('[AudioMap] Erreur chargement GitHub :', e);
-    showStatus('Erreur chargement GitHub — vérifiez la console');
+    console.error('[AudioMap] Erreur chargement index.json :', e);
+    showStatus('Erreur chargement — vérifiez la console (F12)');
   }
 
-  // Sélectionner la première destination disponible
   const keys = Object.keys(destinations);
   if (keys.length > 0) currentDest = keys[0];
 
-  // Rendre la UI avec les données chargées (ou vides)
   renderDestTabs();
   renderSitesList();
-  // renderMarkers sera appelé par initMap → map.on('load', ...)
 }
 
 // ─────────────────────────────────────────────
