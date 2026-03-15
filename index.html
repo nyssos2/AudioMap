@@ -1086,6 +1086,8 @@ function selectSite(site) {
 
   // open right panel if collapsed
   if (!rightVisible) toggleSidebar('right');
+  if (typeof showMiniPlayer === 'function' && window.innerWidth <= 768) showMiniPlayer(site);
+  if (typeof showMiniPlayer === 'function' && window.innerWidth <= 768) showMiniPlayer(site);
 }
 
 function showPlayer(site) {
@@ -1661,13 +1663,6 @@ document.getElementById('mob-progress-input').addEventListener('input', e => {
   if (!audio.duration) return;
   audio.currentTime = (e.target.value / 100) * audio.duration;
 });
-
-// Hook selectSite pour mobile
-const _selectSiteOriginal = selectSite;
-selectSite = function(site) {
-  _selectSiteOriginal(site);
-  if (isMobile()) showMiniPlayer(site);
-};
 </script>
 </body>
 </html>
