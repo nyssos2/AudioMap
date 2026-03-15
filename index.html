@@ -856,14 +856,13 @@
 .speed-btns { display: flex; gap: 4px; flex: 1; }
 .speed-btn {
   flex: 1; padding: 5px 0; border-radius: 6px;
-  border: 1px solid var(--border2); background: transparent;
-  font-size: 11px; color: var(--text2); cursor: pointer;
+  border: 1px solid var(--accent); background: transparent;
+  font-size: 11px; color: var(--accent); cursor: pointer;
+  font-family: monospace; letter-spacing: 0.03em;
   transition: all 0.18s;
 }
-.speed-btn:hover { border-color: var(--accent); color: var(--accent); }
-.speed-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 500; }
 .speed-btn:hover { background: var(--accent-dim); }
-.speed-btn.active { background: var(--accent); color: var(--bg); font-weight: 500; }
+.speed-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 
 <!-- UPLOAD OVERLAY -->
 <div id="upload-overlay" onclick="closeImportOutside(event)">
