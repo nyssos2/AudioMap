@@ -1606,7 +1606,7 @@ function renderMobileDrawer() {
         <div class="site-sub">${site.subtitle}</div>
         <div class="site-dur">${site.duration}</div>
       </div>`;
-    item.onclick = () => { closeDrawer(); selectSite(site); };
+    item.onclick = () => { closeDrawer(); setTimeout(() => selectSite(site), 50); };
     list.appendChild(item);
   });
 }
