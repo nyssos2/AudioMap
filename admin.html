@@ -754,7 +754,7 @@ function renderTable() {
       <div><span class="site-file" title="${site.fichier || ''}">${site.fichier || '—'}</span></div>
       <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${site.transcription || '—'}</div>
       <div>
-        <button class="btn-delete" onclick="confirmDelete('${currentDest}', ${i}, '${(site.nom||'').replace(/'/g,"\\'")}', '${site.fichier||''}')" title="Supprimer">
+         <button class="btn-delete" data-dest="${currentDest}" data-index="${i}" data-name="${(site.nom||'').replace(/"/g,'&quot;')}" data-fichier="${site.fichier||''}" title="Supprimer">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M2 3.5h10M5 3.5V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5v1M11 3.5l-.8 8H3.8L3 3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -765,7 +765,15 @@ function renderTable() {
 
   container.innerHTML = html;
 }
-
+document.getElementById('sites-table').addEventListener('click', e => {
+  const btn = e.target.closest('.btn-delete');
+  if (!btn) return;
+  const dest    = btn.dataset.dest;
+  const index   = parseInt(btn.dataset.index);
+  const name    = btn.dataset.name;
+  const fichier = btn.dataset.fichier;
+  confirmDelete(dest, index, name, fichier);
+});
 // ─────────────────────────────────────────────
 // DELETE
 // ─────────────────────────────────────────────
