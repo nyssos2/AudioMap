@@ -616,7 +616,7 @@
           <rect x="2" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor"/>
         </svg>
       </button>
-      <a href="https://audiokit.streamlit.app" target="_blank" class="audiokit-link" title="Générer des audio-guides avec AudioKit">
+      <a href="https://audiokit.streamlit.app" target="_blank" class="audiokit-link" title="Générer des audioguides avec AudioKit">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 4.5l3 1.5-3 1.5V4.5z" fill="currentColor"/></svg>
         AudioKit
         <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style="opacity:0.5"><path d="M2 7L7 2M7 2H4M7 2v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -773,7 +773,7 @@
     <div class="mob-drawer-theme" id="mob-drawer-theme"></div>
     <div class="mob-dest-label">Destination</div>
     <div class="mob-dest-tabs" id="mob-dest-tabs"></div>
-    <div class="mob-sites-label">Audio-guides</div>
+    <div class="mob-sites-label">Audioguides</div>
     <div class="mob-sites-list" id="mob-sites-list"></div>
     <div class="mob-drawer-bottom">
       <button class="mob-bottom-btn accent" onclick="closeDrawer(); openImport();">
@@ -1591,7 +1591,7 @@ function renderMobileDrawer() {
   list.innerHTML = '';
   const dest = destinations[currentDest];
   if (!dest || !dest.sites.length) {
-    list.innerHTML = '<div style="padding:12px 6px;font-size:12px;color:var(--text3);">Aucun audio-guide.</div>';
+    list.innerHTML = '<div style="padding:12px 6px;font-size:12px;color:var(--text3);">Aucun audioguide.</div>';
     return;
   }
   dest.sites.forEach(site => {
@@ -1663,11 +1663,11 @@ document.getElementById('mob-progress-input').addEventListener('input', e => {
 });
 
 // Hook selectSite pour mobile
-const _origSelectSite = selectSite;
-function selectSite(site) {
-  _origSelectSite(site);
+const _selectSiteOriginal = selectSite;
+selectSite = function(site) {
+  _selectSiteOriginal(site);
   if (isMobile()) showMiniPlayer(site);
-}
+};
 </script>
 </body>
 </html>
