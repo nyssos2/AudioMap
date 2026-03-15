@@ -855,12 +855,13 @@
 .speed-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; }
 .speed-btns { display: flex; gap: 4px; flex: 1; }
 .speed-btn {
-  flex: 1; padding: 5px 0; border-radius: 20px;
-  border: 1px solid var(--accent); background: var(--bg);
-  font-size: 11px; color: var(--accent); cursor: pointer;
-  font-family: monospace; letter-spacing: 0.03em;
+  flex: 1; padding: 5px 0; border-radius: 6px;
+  border: 1px solid var(--border2); background: transparent;
+  font-size: 11px; color: var(--text2); cursor: pointer;
   transition: all 0.18s;
 }
+.speed-btn:hover { border-color: var(--accent); color: var(--accent); }
+.speed-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); font-weight: 500; }
 .speed-btn:hover { background: var(--accent-dim); }
 .speed-btn.active { background: var(--accent); color: var(--bg); font-weight: 500; }
 
