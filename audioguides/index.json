@@ -3,7 +3,17 @@
     {
       "key": "japon",
       "nom": "Japon",
-      "sites": []
+      "sites": [
+        {
+          "nom": "Temple d'Or",
+          "sous_titre": "Kinkaku-ji · Kyoto",
+          "lat": 35.0394,
+          "lng": 135.7292,
+          "fichier": "kyoto-kinkakuji.mp3",
+          "duree": "6:08",
+          "transcription": "Konnichiwa ! Bienvenue au Kinkaku-ji..."
+        }
+      ]
     },
     {
       "key": "france",
