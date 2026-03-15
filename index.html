@@ -1146,6 +1146,14 @@ function seek(sec) {
 function updatePlayBtn() {
   document.getElementById('play-icon').style.display = isPlaying ? 'none' : 'block';
   document.getElementById('pause-icon').style.display = isPlaying ? 'block' : 'none';
+  const pi = document.getElementById('mob-play-icon');
+  const pai = document.getElementById('mob-pause-icon');
+  const pi2 = document.getElementById('mob-play-icon2');
+  const pai2 = document.getElementById('mob-pause-icon2');
+  if (pi) pi.style.display = isPlaying ? 'none' : 'block';
+  if (pai) pai.style.display = isPlaying ? 'block' : 'none';
+  if (pi2) pi2.style.display = isPlaying ? 'none' : 'block';
+  if (pai2) pai2.style.display = isPlaying ? 'block' : 'none';
 }
 
 audio.addEventListener('timeupdate', () => {
@@ -1631,20 +1639,6 @@ function expandPlayer() {
 
 function collapsePlayer() {
   document.getElementById('mob-full-player').classList.remove('show');
-}
-
-// Sync play/pause icons mobile
-const _origUpdatePlayBtn = updatePlayBtn;
-function updatePlayBtn() {
-  _origUpdatePlayBtn();
-  const pi = document.getElementById('mob-play-icon');
-  const pai = document.getElementById('mob-pause-icon');
-  const pi2 = document.getElementById('mob-play-icon2');
-  const pai2 = document.getElementById('mob-pause-icon2');
-  if (pi) pi.style.display = isPlaying ? 'none' : 'block';
-  if (pai) pai.style.display = isPlaying ? 'block' : 'none';
-  if (pi2) pi2.style.display = isPlaying ? 'none' : 'block';
-  if (pai2) pai2.style.display = isPlaying ? 'block' : 'none';
 }
 
 // Sync progress mobile
