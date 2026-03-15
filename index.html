@@ -428,6 +428,91 @@
     25% { transform: translateX(-6px); }
     75% { transform: translateX(6px); }
   }
+
+  /* ── RESPONSIVE MOBILE ── */
+  @media (max-width: 768px) {
+
+    /* Topbar : masquer AudioKit + thème, garder logo + tabs + import */
+    .audiokit-link { display: none; }
+    .theme-switcher { display: none; }
+    .dest-tabs { max-width: 160px; overflow-x: auto; flex-wrap: nowrap; }
+    .dest-tab { font-size: 11px; padding: 4px 10px; white-space: nowrap; }
+    .btn-import span { display: none; }
+    .btn-import { padding: 7px 10px; }
+
+    /* Sidebars : cachées par défaut sur mobile */
+    #sidebar-left { 
+      position: fixed; top: var(--topbar-h); left: 0; bottom: 0;
+      z-index: 200; width: 85vw !important;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      opacity: 1 !important;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    }
+    #sidebar-left.mobile-open { transform: translateX(0); }
+    #sidebar-left.collapsed { transform: translateX(-100%); width: 85vw !important; }
+
+    /* Player : panneau qui monte depuis le bas */
+    #player-panel {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      width: 100% !important; 
+      max-height: 75vh;
+      border-left: none;
+      border-top: 1px solid var(--border2);
+      border-radius: 16px 16px 0 0;
+      z-index: 200;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      opacity: 1 !important;
+    }
+    #player-panel.mobile-open { transform: translateY(0); }
+    #player-panel.collapsed { transform: translateY(100%); width: 100% !important; }
+
+    .player-inner { min-width: unset; overflow-y: auto; }
+
+    /* Cacher les toggles PC sur mobile */
+    #toggle-left { display: none; }
+    #toggle-right { display: none; }
+
+    /* Barre de navigation mobile en bas de la carte */
+    #mobile-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 56px; z-index: 190;
+      background: var(--surface);
+      border-top: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: space-around;
+    }
+    .mob-btn {
+      flex: 1; height: 100%; border: none; background: transparent;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; cursor: pointer; color: var(--text3);
+      font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+      transition: color 0.18s;
+    }
+    .mob-btn svg { flex-shrink: 0; }
+    .mob-btn.active { color: var(--accent); }
+
+    /* Overlay sombre derrière les panneaux */
+    #mobile-overlay {
+      display: none; position: fixed; inset: 0; z-index: 199;
+      background: rgba(0,0,0,0.5);
+    }
+    #mobile-overlay.show { display: block; }
+
+    /* Carte : marge basse pour la nav mobile */
+    #map { padding-bottom: 56px; }
+
+    /* Player handle (barre de drag visuelle) */
+    .player-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border2); margin: 10px auto 0;
+      flex-shrink: 0;
+    }
+  }
+
+  /* Cacher la nav mobile sur desktop */
+  #mobile-nav { display: none; }
+
 </style>
 </head>
 <body>
@@ -494,6 +579,9 @@
     </div>
   </div>
 
+  <!-- OVERLAY MOBILE -->
+  <div id="mobile-overlay" onclick="closeMobilePanels()"></div>
+
   <!-- MAIN -->
   <div id="main">
 
@@ -523,6 +611,7 @@
         <button class="toggle-btn" id="toggle-right" onclick="toggleSidebar('right')" title="Masquer/afficher">›</button>
       </div>
       <div class="player-inner" id="player-inner">
+      <div class="player-handle" id="player-handle"></div>
         <div class="player-empty" id="player-empty">
           <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
             <circle cx="20" cy="20" r="18" stroke="#c9a96e" stroke-width="1.5"/>
@@ -607,6 +696,26 @@
     </div>
 
   </div><!-- /main -->
+  <!-- NAV MOBILE -->
+  <div id="mobile-nav">
+    <button class="mob-btn" id="mob-sites" onclick="toggleMobilePanel('left')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="1.5" rx="0.75" fill="currentColor"/><rect x="3" y="9.25" width="10" height="1.5" rx="0.75" fill="currentColor"/><rect x="3" y="13.5" width="12" height="1.5" rx="0.75" fill="currentColor"/></svg>
+      Sites
+    </button>
+    <button class="mob-btn" id="mob-map" onclick="closeMobilePanels()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.5" fill="currentColor"/><line x1="10" y1="3" x2="10" y2="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="19" x2="10" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="10" x2="1" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Carte
+    </button>
+    <button class="mob-btn" id="mob-player" onclick="toggleMobilePanel('right')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 7l6 3-6 3V7z" fill="currentColor"/></svg>
+      Lecteur
+    </button>
+    <button class="mob-btn" onclick="openImport()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 15v1.5A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Import
+    </button>
+  </div>
+
 </div><!-- /app -->
 
 /* ── SPEED CONTROLS ── */
@@ -1297,6 +1406,67 @@ function togglePwd() {
 if (sessionStorage.getItem('am_auth') === '1') {
   const ls = document.getElementById('login-screen');
   if (ls) ls.style.display = 'none';
+}
+
+
+// ─────────────────────────────────────────────
+// MOBILE NAV
+// ─────────────────────────────────────────────
+const isMobile = () => window.innerWidth <= 768;
+
+function toggleMobilePanel(side) {
+  if (!isMobile()) return;
+  const overlay = document.getElementById('mobile-overlay');
+  if (side === 'left') {
+    const panel = document.getElementById('sidebar-left');
+    const isOpen = panel.classList.contains('mobile-open');
+    closeMobilePanels();
+    if (!isOpen) {
+      panel.classList.add('mobile-open');
+      overlay.classList.add('show');
+      document.getElementById('mob-sites').classList.add('active');
+    }
+  } else {
+    const panel = document.getElementById('player-panel');
+    const isOpen = panel.classList.contains('mobile-open');
+    closeMobilePanels();
+    if (!isOpen) {
+      panel.classList.add('mobile-open');
+      overlay.classList.add('show');
+      document.getElementById('mob-player').classList.add('active');
+    }
+  }
+}
+
+function closeMobilePanels() {
+  if (!isMobile()) return;
+  document.getElementById('sidebar-left').classList.remove('mobile-open');
+  document.getElementById('player-panel').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+  document.querySelectorAll('.mob-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mob-map').classList.add('active');
+}
+
+// Sur mobile, au clic sur un site → ouvrir le lecteur automatiquement
+const _origSelectSite = selectSite;
+function selectSite(site) {
+  _origSelectSite(site);
+  if (isMobile()) {
+    setTimeout(() => toggleMobilePanel('right'), 100);
+  }
+}
+
+// Init mobile
+window.addEventListener('resize', () => {
+  if (!isMobile()) {
+    document.getElementById('sidebar-left').classList.remove('mobile-open');
+    document.getElementById('player-panel').classList.remove('mobile-open');
+    document.getElementById('mobile-overlay').classList.remove('show');
+  }
+});
+
+if (isMobile()) {
+  document.getElementById('mob-map').classList.add('active');
 }
 
 </script>
