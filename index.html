@@ -1069,8 +1069,9 @@ function selectSite(site) {
   currentSite = site;
 
   // update sidebar
-  document.querySelectorAll('.site-item').forEach((el, i) => {
-    el.classList.toggle('active', destinations[currentDest].sites[i].id === site.id);
+  document.querySelectorAll('.site-item').forEach(el => {
+    const siteName = el.querySelector('.site-name')?.textContent;
+    el.classList.toggle('active', siteName === site.name);
   });
 
   // update markers
