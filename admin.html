@@ -798,6 +798,9 @@ async function doDelete() {
   closeConfirm();
   if (!deleteInfo) return;
   const { destKey, siteIndex, siteName, fichier } = deleteInfo;
+  console.log('Tentative suppression fichier :', `${API_BASE}/audioguides/${destKey}/${fichier}`);
+  const fileRes = await ghGet(`${API_BASE}/audioguides/${destKey}/${fichier}`);
+  console.log('Réponse GitHub GET fichier :', fileRes.status);
 
   showLoading(`Suppression de "${siteName}"…`);
 
