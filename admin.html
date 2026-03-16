@@ -816,8 +816,10 @@ async function doDelete() {
           sha: fileJson.sha,
           branch: GITHUB_BRANCH
         });
+        console.log('Réponse DELETE MP3 :', delRes.status);
         if (!delRes.ok) {
           const e = await delRes.json();
+          console.log('Erreur DELETE :', e);
           throw new Error(e.message || 'Erreur suppression MP3');
         }
       }
