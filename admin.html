@@ -839,9 +839,10 @@ async function doDelete() {
       sha: indexSha,
       branch: GITHUB_BRANCH
     });
-
+    console.log('Réponse PUT index.json :', putRes.status);
     if (!putRes.ok) {
       const e = await putRes.json();
+	  console.log('Erreur détail :', e);
       throw new Error(e.message || 'Erreur mise à jour index.json');
     }
 
