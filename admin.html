@@ -768,6 +768,7 @@ function renderTable() {
 document.getElementById('sites-table').addEventListener('click', e => {
   const btn = e.target.closest('.btn-delete');
   if (!btn) return;
+  console.log('btn-delete cliqué', btn.dataset);  // ← ici
   const dest    = btn.dataset.dest;
   const index   = parseInt(btn.dataset.index);
   const name    = btn.dataset.name;
@@ -793,6 +794,7 @@ function closeConfirm() {
 }
 
 async function doDelete() {
+  console.log('doDelete appelé', pendingDelete);
   closeConfirm();
   if (!pendingDelete) return;
   const { destKey, siteIndex, siteName, fichier } = pendingDelete;
