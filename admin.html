@@ -968,7 +968,7 @@ async function addSite() {
     const idxJson = await idxRes.json();
     indexSha = idxJson.sha;
 
-    const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexData, null, 2))));
+    const newContent = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(indexData, null, 2))));
     const putRes = await ghPut(`${API_BASE}/audioguides/index.json`, {
       message: `🎧 Ajout de l'audioguide : ${name}`,
       content: newContent,
