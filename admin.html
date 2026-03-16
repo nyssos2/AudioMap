@@ -794,10 +794,10 @@ function closeConfirm() {
 }
 
 async function doDelete() {
-  console.log('doDelete appelé', pendingDelete);
+  const deleteInfo = pendingDelete;
   closeConfirm();
-  if (!pendingDelete) return;
-  const { destKey, siteIndex, siteName, fichier } = pendingDelete;
+  if (!deleteInfo) return;
+  const { destKey, siteIndex, siteName, fichier } = deleteInfo;
 
   showLoading(`Suppression de "${siteName}"…`);
 
