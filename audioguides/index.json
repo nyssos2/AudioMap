@@ -12,6 +12,15 @@
           "fichier": "guide_quartier_Asakusa_Tokyo_Adultes_final_1.mp3",
           "duree": "?:??",
           "transcription": "Quartier Asakusa en mode découverte locale"
+        },
+        {
+          "nom": "Temple d'or de Kyoto",
+          "sous_titre": "Kinkaku-ji Kyoto",
+          "lat": 35.036999852,
+          "lng": 135.724330436,
+          "fichier": "guide_temple_dor_à_kyoto_Adultes_final_2.mp3",
+          "duree": "?:??",
+          "transcription": "Kinkaku-ji Kyoto"
         }
       ]
     },
