@@ -5,15 +5,6 @@
       "nom": "Japon",
       "sites": [
         {
-          "nom": "Temple d'Or",
-          "sous_titre": "Kinkaku-ji Ã  Kyoto",
-          "lat": 35.0394,
-          "lng": 135.7292,
-          "fichier": "guide_le_temple_dor_a_kyoto_Adultes_final_1.mp3",
-          "duree": "6:08",
-          "transcription": "Konnichiwa ! Bienvenue au Kinkaku-ji..."
-        },
-        {
           "nom": "Quartier Asakusa - Tokyo",
           "sous_titre": "Asakusa Tokyo",
           "lat": 35.7118,
