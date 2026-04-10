@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/nyssos2/AudioMap/main/logo.png" alt="AudioKit Logo" width="120" />
+
 # 🎧 AudioMap
 
 > Application web d'audio-guides géolocalisés sur carte 3D interactive
