@@ -585,6 +585,18 @@
   }
 .speed-btn:hover { background: var(--accent-dim) !important; }
 .speed-btn.active { background: var(--accent-dim) !important; font-weight: 600; }
+.cluster-marker {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(201,169,110,0.85);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 700; color: #1c1c24;
+  box-shadow: 0 4px 20px rgba(201,169,110,0.4);
+  transition: transform 0.2s;
+}
+.cluster-marker:hover { transform: scale(1.15); }
+
 </style>
 </head>
 <body>
@@ -1046,9 +1058,68 @@ function renderSitesList() {
 }
 
 function renderMarkers() {
+  // Supprimer les anciens marqueurs
   Object.values(markers).forEach(m => m.remove());
   markers = {};
+
   const dest = destinations[currentDest];
+  if (!dest || !dest.sites.length) return;
+
+  // Supprimer les anciennes sources/layers de cluster si elles existent
+  ['clusters','cluster-count','unclustered-point'].forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+  });
+  if (map.getSource('sites')) map.removeSource('sites');
+
+  // Créer la source GeoJSON avec clustering
+  const geojson = {
+    type: 'FeatureCollection',
+    features: dest.sites.map(site => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [site.lng, site.lat] },
+      properties: { id: site.id }
+    }))
+  };
+
+  map.addSource('sites', {
+    type: 'geojson',
+    data: geojson,
+    cluster: true,
+    clusterMaxZoom: 12,
+    clusterRadius: 50
+  });
+
+  // Layer clusters (cercles)
+  map.addLayer({
+    id: 'clusters',
+    type: 'circle',
+    source: 'sites',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': 'rgba(201,169,110,0.85)',
+      'circle-radius': ['step', ['get', 'point_count'], 22, 5, 28, 10, 34],
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#c9a96e'
+    }
+  });
+
+  // Layer compteur de cluster
+  map.addLayer({
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'sites',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '{point_count_abbreviated}',
+      'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+      'text-size': 14
+    },
+    paint: { 'text-color': '#1c1c24' }
+  });
+
+  // Marqueurs individuels (non clusterisés) avec icône SVG
+  const siteFeatures = map.querySourceFeatures('sites', { filter: ['!', ['has', 'point_count']] });
+
   dest.sites.forEach(site => {
     const el = document.createElement('div');
     el.className = 'map-marker' + (currentSite && currentSite.id === site.id ? ' active' : '');
@@ -1060,6 +1131,37 @@ function renderMarkers() {
       .addTo(map);
     markers[site.id] = marker;
   });
+
+  // Clic sur un cluster → zoom
+  map.on('click', 'clusters', (e) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('sites').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({ center: features[0].geometry.coordinates, zoom: zoom + 1 });
+    });
+  });
+
+  map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '');
+
+  // Masquer/afficher les marqueurs SVG selon le zoom
+  function updateMarkerVisibility() {
+    const zoom = map.getZoom();
+    dest.sites.forEach(site => {
+      const m = markers[site.id];
+      if (!m) return;
+      const el = m.getElement();
+      // Vérifier si ce site fait partie d'un cluster visible
+      const rendered = map.queryRenderedFeatures({ layers: ['clusters'] });
+      const clusterCoords = rendered.map(f => f.geometry.coordinates);
+      // Afficher le marqueur seulement si pas clusterisé
+      el.style.display = zoom >= 12 ? 'flex' : 'none';
+    });
+  }
+
+  map.on('zoom', updateMarkerVisibility);
+  updateMarkerVisibility();
 }
 
 // ─────────────────────────────────────────────
@@ -1254,6 +1356,10 @@ function switchDest(key) {
   map.flyTo({ center: dest.center, zoom: dest.zoom, pitch: dest.pitch, bearing: dest.bearing, speed: 1.0 });
   renderDestTabs();
   renderSitesList();
+  ['clusters','cluster-count'].forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+  });
+  if (map.getSource('sites')) map.removeSource('sites');
   renderMarkers();
 }
 
