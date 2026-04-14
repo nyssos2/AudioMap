@@ -1189,7 +1189,6 @@ function selectSite(site) {
 
   // open right panel if collapsed
   if (!rightVisible) toggleSidebar('right');
-  console.log('selectSite appelé, width=', window.innerWidth, 'site=', site.name);
   if (typeof showMiniPlayer === 'function' && window.innerWidth <= 768) showMiniPlayer(site);
 }
 
