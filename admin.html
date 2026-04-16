@@ -680,7 +680,10 @@ async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     indexSha = json.sha;
-    indexData = JSON.parse(atob(json.content.replace(/\n/g,'')));
+    const decoded = new TextDecoder('utf-8').decode(
+      Uint8Array.from(atob(json.content.replace(/\n/g,'')), c => c.charCodeAt(0))
+    );
+    indexData = JSON.parse(decoded);
     updateStats();
     renderDestTabs();
     if (!currentDest && indexData.destinations.length > 0) {
